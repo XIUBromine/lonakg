@@ -8,6 +8,7 @@ import pandas as pd
 from neo4j import GraphDatabase, Session
 
 
+# 填写你的 Neo4j 连接信息
 NEO4J_URI = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "12345678"
@@ -43,13 +44,16 @@ def normalize_text(value: Optional[str]) -> Optional[str]:
     return cleaned or None
 
 
-def build_key(value: Optional[str]) -> Optional[str]:
-    cleaned = normalize_text(value)
-    if cleaned is None:
-        return None
-    salted = cleaned.lower() + SALT_SUFFIX
-    return hashlib.sha256(salted.encode("utf-8")).hexdigest()
+# def build_key(value: Optional[str]) -> Optional[str]:
+#     cleaned = normalize_text(value)
+#     if cleaned is None:
+#         return None
+#     salted = cleaned.lower() + SALT_SUFFIX
+#     return hashlib.sha256(salted.encode("utf-8")).hexdigest()
 
+# 不要重复加密
+def build_key(value: Optional[str]) -> Optional[str]:
+    return normalize_text(value)
 
 def transform_row(row: pd.Series) -> Optional[Dict[str, Optional[str]]]:
     reason = normalize_text(row.get("reason"))
