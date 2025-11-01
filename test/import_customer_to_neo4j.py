@@ -8,14 +8,18 @@ import pandas as pd
 from neo4j import GraphDatabase, Session, Transaction
 
 
-# 填写你的 Neo4j 连接信息
-NEO4J_URI = "bolt://localhost:7687"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "12345678"
+from dotenv import load_dotenv
+import os
+
+# 从.env文件加载Neo4j连接信息
+load_dotenv()
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "123456")
 
 CSV_FILENAME = "test/客户信息.csv"
-BATCH_SIZE = 500
-PROGRESS_INTERVAL = 500
+BATCH_SIZE = 5000
+PROGRESS_INTERVAL = 5000
 SALT_SUFFIX = ":bank_salt_v2"
 
 RENAME_MAP = {

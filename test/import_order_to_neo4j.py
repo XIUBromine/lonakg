@@ -8,12 +8,16 @@ import pandas as pd
 from neo4j import GraphDatabase, Session, Transaction
 
 
-# 填写你的 Neo4j 连接信息
-NEO4J_URI = "bolt://localhost:7687"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "mancheng-jindai-huangjinjia-9527"
+from dotenv import load_dotenv
+import os
 
-CSV_FILENAME = "订单order信息.csv"
+# 从.env文件加载Neo4j连接信息
+load_dotenv()
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "123456")
+
+CSV_FILENAME = "test/订单order信息.csv"
 # CSV_FILENAME = "订单order信息.csv"
 BATCH_SIZE = 5000
 PROGRESS_INTERVAL = 5000
