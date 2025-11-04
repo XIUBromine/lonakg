@@ -15,7 +15,7 @@ NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "123456")
 
 CSV_FILENAME = "黑名单.csv"
-CSV_FILENAME = "test/黑名单.csv"
+CSV_FILENAME = "data/黑名单.csv"
 BATCH_SIZE = 500
 SALT_SUFFIX = ":bank_salt_v2"
 

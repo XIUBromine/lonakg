@@ -233,32 +233,24 @@ def demo_query_usage(session: Session) -> None:
 
 
 if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="更新非uid节点的关联uid信息 - 简化版")
-    parser.add_argument("--clear", action="store_true", 
-                       help="是否清理现有的关联属性（重新计算）")
-    parser.add_argument("--stats", action="store_true",
-                       help="只显示统计信息，不执行更新")
-    parser.add_argument("--demo", action="store_true",
-                       help="演示查询使用方法")
-    
-    args = parser.parse_args()
-    
-    if args.stats or args.demo:
+    CLEAR = False   # 清理现有的关联属性（重新计算）
+    STATS_ONLY = False  # 只显示统计信息，不执行更新
+    DEMO = False    # 演示查询使用方法
+
+    if STATS_ONLY or DEMO:
         # 显示统计信息或演示
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         try:
             with driver.session() as session:
-                if args.stats:
+                if STATS_ONLY:
                     get_statistics(session)
-                if args.demo:
+                if DEMO:
                     demo_query_usage(session)
         finally:
             driver.close()
     else:
         # 执行更新
-        main(clear_properties=args.clear)
+        main(clear_properties=CLEAR)
         
         # 更新完成后显示统计信息
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))

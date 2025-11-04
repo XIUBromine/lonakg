@@ -17,12 +17,20 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "123456")
 
+# CSV_FILENAMES = [
+#     "test/第一联系人.csv",
+#     "test/其它联系人.csv",
+#     "test/手机号关联第一联系人衍生.csv",
+#     "test/手机号关联其他联系人衍生.csv",
+# ]
+
 CSV_FILENAMES = [
-    "test/第一联系人.csv",
-    "test/其它联系人.csv",
-    "test/手机号关联第一联系人衍生.csv",
-    "test/手机号关联其他联系人衍生.csv",
+    "data/第一联系人.csv",
+    "data/其它联系人.csv",
+    "data/手机号关联第一联系人衍生.csv",
+    "data/手机号关联其他联系人衍生.csv",
 ]
+
 
 BATCH_SIZE = 5000
 PROGRESS_INTERVAL = 5000

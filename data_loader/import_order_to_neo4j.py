@@ -17,7 +17,7 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "123456")
 
-CSV_FILENAME = "test/订单order信息.csv"
+CSV_FILENAME = "data/订单order信息.csv"
 # CSV_FILENAME = "订单order信息.csv"
 BATCH_SIZE = 5000
 PROGRESS_INTERVAL = 5000
@@ -44,6 +44,7 @@ CONSTRAINT_QUERIES = [
     "CREATE CONSTRAINT card_no_key IF NOT EXISTS FOR (n:card_no) REQUIRE n.key IS UNIQUE",
 ]
 
+# 不同的order_id创建不同的边
 BATCH_QUERY = """
 UNWIND $rows AS row
 MERGE (u:uid {uid_key: row.uid_key})
@@ -52,9 +53,8 @@ WITH row, u
 // 1. UID → 申请手机号 (保留)
 FOREACH (_ IN CASE WHEN row.phone_num_key IS NULL THEN [] ELSE [1] END |
     MERGE (p_phone:phone_num {key: row.phone_num_key})
-    MERGE (u)-[r1:order_apply_phone_num]->(p_phone)
-    SET r1.order_id = row.order_id,
-        r1.order_status = row.order_status,
+    MERGE (u)-[r1:order_apply_phone_num {order_id: row.order_id}]->(p_phone)
+    SET r1.order_status = row.order_status,
         r1.apply_time = CASE WHEN row.apply_time IS NULL THEN NULL ELSE datetime(row.apply_time) END,
         r1.sign_time = CASE WHEN row.sign_time IS NULL THEN NULL ELSE datetime(row.sign_time) END
 )
@@ -62,9 +62,8 @@ FOREACH (_ IN CASE WHEN row.phone_num_key IS NULL THEN [] ELSE [1] END |
 // 2. UID → 身份证号 (保留)
 FOREACH (_ IN CASE WHEN row.identity_no_key IS NULL THEN [] ELSE [1] END |
     MERGE (iden:identity_no {key: row.identity_no_key})
-    MERGE (u)-[r2:order_apply_identity_no]->(iden)
-    SET r2.order_id = row.order_id,
-        r2.order_status = row.order_status,
+    MERGE (u)-[r2:order_apply_identity_no {order_id: row.order_id}]->(iden)
+    SET r2.order_status = row.order_status,
         r2.apply_time = CASE WHEN row.apply_time IS NULL THEN NULL ELSE datetime(row.apply_time) END,
         r2.sign_time = CASE WHEN row.sign_time IS NULL THEN NULL ELSE datetime(row.sign_time) END
 )
@@ -72,20 +71,17 @@ FOREACH (_ IN CASE WHEN row.identity_no_key IS NULL THEN [] ELSE [1] END |
 // 3. UID → 申请银行卡 (保留)
 FOREACH (_ IN CASE WHEN row.card_no_key IS NULL THEN [] ELSE [1] END |
     MERGE (card_apply:card_no {key: row.card_no_key})
-    MERGE (u)-[r3:order_apply_card_no]->(card_apply)
-    SET r3.order_id = row.order_id,
-        r3.order_status = row.order_status,
+    MERGE (u)-[r3:order_apply_card_no {order_id: row.order_id}]->(card_apply)
+    SET r3.order_status = row.order_status,
         r3.apply_time = CASE WHEN row.apply_time IS NULL THEN NULL ELSE datetime(row.apply_time) END,
         r3.sign_time = CASE WHEN row.sign_time IS NULL THEN NULL ELSE datetime(row.sign_time) END
 )
 
 // 4. UID → 银行卡绑定手机号 (修改：关系方向改为UID→手机号)
 FOREACH (_ IN CASE WHEN row.card_phone_num_key IS NULL THEN [] ELSE [1] END |
-    MERGE (card_apply:card_no {key: row.card_no_key})
     MERGE (phone_card_apply:phone_num {key: row.card_phone_num_key})
-    MERGE (u)-[r4:order_apply_card_phone_num]->(phone_card_apply)
-    SET r4.order_id = row.order_id,
-        r4.order_status = row.order_status,
+    MERGE (u)-[r4:order_apply_card_phone_num {order_id: row.order_id}]->(phone_card_apply)
+    SET r4.order_status = row.order_status,
         r4.apply_time = CASE WHEN row.apply_time IS NULL THEN NULL ELSE datetime(row.apply_time) END,
         r4.sign_time = CASE WHEN row.sign_time IS NULL THEN NULL ELSE datetime(row.sign_time) END
 )
@@ -93,20 +89,17 @@ FOREACH (_ IN CASE WHEN row.card_phone_num_key IS NULL THEN [] ELSE [1] END |
 // 5. UID → 还款银行卡 (保留)
 FOREACH (_ IN CASE WHEN row.repay_card_no_key IS NULL THEN [] ELSE [1] END |
     MERGE (card_repay:card_no {key: row.repay_card_no_key})
-    MERGE (u)-[r5:order_repay_card_no]->(card_repay)
-    SET r5.order_id = row.order_id,
-        r5.order_status = row.order_status,
+    MERGE (u)-[r5:order_repay_card_no {order_id: row.order_id}]->(card_repay)
+    SET r5.order_status = row.order_status,
         r5.apply_time = CASE WHEN row.apply_time IS NULL THEN NULL ELSE datetime(row.apply_time) END,
         r5.sign_time = CASE WHEN row.sign_time IS NULL THEN NULL ELSE datetime(row.sign_time) END
 )
 
 // 6. UID → 还款银行卡绑定手机号 (修改：关系方向改为UID→手机号)
 FOREACH (_ IN CASE WHEN row.repay_card_phone_key IS NULL THEN [] ELSE [1] END |
-    MERGE (card_repay:card_no {key: row.repay_card_no_key})
     MERGE (phone_repay:phone_num {key: row.repay_card_phone_key})
-    MERGE (u)-[r6:order_repay_card_phone_num]->(phone_repay)
-    SET r6.order_id = row.order_id,
-        r6.order_status = row.order_status,
+    MERGE (u)-[r6:order_repay_card_phone_num {order_id: row.order_id}]->(phone_repay)
+    SET r6.order_status = row.order_status,
         r6.apply_time = CASE WHEN row.apply_time IS NULL THEN NULL ELSE datetime(row.apply_time) END,
         r6.sign_time = CASE WHEN row.sign_time IS NULL THEN NULL ELSE datetime(row.sign_time) END
 )

@@ -17,7 +17,7 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "123456")
 
-CSV_FILENAME = "test/登录信息.csv"
+CSV_FILENAME = "data/登录信息.csv"
 BATCH_SIZE = 5000
 PROGRESS_INTERVAL = 5000
 SALT_SUFFIX = ":bank_salt_v2"
