@@ -1,0 +1,37 @@
+{
+  "auc_score": 0.5004785676616642,
+  "total_samples": 4449,
+  "positive_samples": 1354,
+  "negative_samples": 3095,
+  "blacklist_risk_mean": 95.94571639586418,
+  "blacklist_risk_std": 445.4598077217942,
+  "normal_risk_mean": 99.13318255250391,
+  "normal_risk_std": 345.5036362048064,
+  "weights": [
+    {
+      "blacklisted_phone_num": 1,
+      "blacklisted_identity_no": 1,
+      "anomalous_phone_num": 1,
+      "anomalous_identity_no": 1,
+      "anomalous_card_no": 1,
+      "anomalous_device_no": 1,
+      "anomalous_td_device_id": 1,
+      "anomalous_remote_ip": 1,
+      "anomalous_geo_code": 1
+    },
+    {
+      "blacklisted_uid": 10
+    },
+    {
+      "blacklisted_phone_num": 10,
+      "blacklisted_identity_no": 10,
+      "anomalous_phone_num": 0.1,
+      "anomalous_identity_no": 0.1,
+      "anomalous_card_no": 0.1,
+      "anomalous_device_no": 0.1,
+      "anomalous_td_device_id": 0.1,
+      "anomalous_remote_ip": 0.1,
+      "anomalous_geo_code": 0.1
+    }
+  ]
+}

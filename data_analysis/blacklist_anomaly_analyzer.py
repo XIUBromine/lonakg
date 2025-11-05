@@ -341,21 +341,14 @@ class BlacklistAnalyzer:
         
         return anomaly_stats
     
-    def batch_analyze_neighborhoods(self, session: Session, uids: List[Tuple[str, bool]], 
-                                  sample_size: int = None) -> List[UidNeighborhoodAnalysis]:
+    def batch_analyze_neighborhoods(self, session: Session, uids: List[Tuple[str, bool]], is_blacklisted: bool) -> List[UidNeighborhoodAnalysis]:
         """批量分析uid邻域"""
-        
-        if sample_size and len(uids) > sample_size:
-            import random
-            uids = random.sample(uids, sample_size)
-            print(f"随机采样 {sample_size} 个uid进行分析")
-        
         print(f"开始分析 {len(uids)} 个uid的邻域特征...")
         
         analyses = []
         processed = 0
         
-        for uid_key, is_blacklisted in uids:
+        for uid_key in uids:
             try:
                 analysis = self.analyze_uid_neighborhood(session, uid_key, is_blacklisted)
                 analyses.append(analysis)
@@ -570,7 +563,6 @@ class BlacklistAnalyzer:
 def main():
     """主函数"""
     MAX_K_HOPS = 3
-    SAMPLE_SIZE = 10000
     EXPORT_FILENAME = "neighborhood_analysis.json"
 
     analyzer = BlacklistAnalyzer(max_k_hops=MAX_K_HOPS)
@@ -578,31 +570,21 @@ def main():
     try:
         with analyzer.driver.session() as session:
             print(f"开始邻域异常节点分析...")
-            print(f"配置: 最大跳数={MAX_K_HOPS}, 采样数={SAMPLE_SIZE}")
-            
-            # 获取所有uid
-            all_uids = analyzer.get_all_uids(session, limit=SAMPLE_SIZE * 3)
 
-            if not all_uids:
-                print("❌ 未找到uid数据，请检查数据库")
-                return
-            
-            # 分离黑名单和正常uid
-            blacklist_uids = [(uid, is_bl) for uid, is_bl in all_uids if is_bl]
-            normal_uids = [(uid, is_bl) for uid, is_bl in all_uids if not is_bl]
+            # 读取黑名单和正常uid
+            with open("data_analysis/normal_user_ids.txt", "r", encoding="utf-8") as f:
+                normal_uids = [line.strip() for line in f if line.strip()]
+            with open("data_analysis/blacklist_user_ids.txt", "r", encoding="utf-8") as f:
+                blacklist_uids = [line.strip() for line in f if line.strip()]
             
             print(f"找到 {len(blacklist_uids)} 个黑名单uid, {len(normal_uids)} 个正常uid")
             
             # 分析黑名单uid邻域
-            blacklist_analyses = analyzer.batch_analyze_neighborhoods(
-                session, blacklist_uids, sample_size=min(len(blacklist_uids), SAMPLE_SIZE // 2)
-            )
+            blacklist_analyses = analyzer.batch_analyze_neighborhoods(session, blacklist_uids, is_blacklisted=True)
             
             # 分析正常uid邻域
-            normal_analyses = analyzer.batch_analyze_neighborhoods(
-                session, normal_uids, sample_size=min(len(normal_uids), SAMPLE_SIZE // 2)
-            )
-            
+            normal_analyses = analyzer.batch_analyze_neighborhoods(session, normal_uids, is_blacklisted=False)
+
             if not blacklist_analyses and not normal_analyses:
                 print("❌ 未能分析任何uid")
                 return
