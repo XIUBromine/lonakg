@@ -40,82 +40,64 @@ def read_month_csv(path: str, usecols: List[str], time_col: str) -> pd.DataFrame
     return df
 
 
-def load_labels() -> Dict[str, Dict[str, Set[str]]]:
-    labels: Dict[str, Dict[str, Set[str]]] = {
-        'blacklist': {'customer_no': set(), 'mobile': set(), 'identity': set(), 'reason_by_customer': {}},
-        'complaint': {'contact_phone': set(), 'register_phone': set(), 'identity': set()},
-        'consumer': {'contact_phone': set(), 'register_phone': set(), 'identity': set()},
-    }
-    # 黑名单
-    bl_path = os.path.join(RAW_ROOT, '黑名单.csv')
-    if os.path.isfile(bl_path):
-        bl_df = pd.read_csv(bl_path, usecols=['c_customer_no', 'c_reason_list', 'c_mobile_phone', 'c_identity_no'])
-        bl_df = bl_df.fillna('')
-        labels['blacklist']['customer_no'] = set(bl_df['c_customer_no'].astype(str))
-        labels['blacklist']['mobile'] = set(bl_df['c_mobile_phone'].astype(str))
-        labels['blacklist']['identity'] = set(bl_df['c_identity_no'].astype(str))
-        labels['blacklist']['reason_by_customer'] = dict(zip(bl_df['c_customer_no'].astype(str), bl_df['c_reason_list'].astype(str)))
-    # 客诉
-    cs_path = os.path.join(RAW_ROOT, '客诉工单信息.csv')
-    if os.path.isfile(cs_path):
-        cs_df = pd.read_csv(cs_path, usecols=['c_contact_phone_no', 'c_register_phone_no', 'c_identity_no'])
-        cs_df = cs_df.fillna('')
-        labels['complaint']['contact_phone'] = set(cs_df['c_contact_phone_no'].astype(str))
-        labels['complaint']['register_phone'] = set(cs_df['c_register_phone_no'].astype(str))
-        labels['complaint']['identity'] = set(cs_df['c_identity_no'].astype(str))
-    # 消保
-    cp_path = os.path.join(RAW_ROOT, '消保案件工单.csv')
-    if os.path.isfile(cp_path):
-        cp_df = pd.read_csv(cp_path, usecols=['c_contact_phone_no', 'c_register_phone_no', 'c_identity_no'])
-        cp_df = cp_df.fillna('')
-        labels['consumer']['contact_phone'] = set(cp_df['c_contact_phone_no'].astype(str))
-        labels['consumer']['register_phone'] = set(cp_df['c_register_phone_no'].astype(str))
-        labels['consumer']['identity'] = set(cp_df['c_identity_no'].astype(str))
+def load_labels() -> Dict[str, pd.DataFrame]:
+    def load_or_empty(path: str, usecols: List[str]) -> pd.DataFrame:
+        if os.path.isfile(path):
+            return pd.read_csv(path, usecols=usecols).fillna('')
+        return pd.DataFrame(columns=usecols)
+
+    labels: Dict[str, pd.DataFrame] = {}
+    labels['blacklist'] = load_or_empty(
+        os.path.join(RAW_ROOT, '黑名单.csv'),
+        ['c_customer_no', 'c_reason_list', 'c_mobile_phone', 'c_identity_no'],
+    )
+    labels['complaint'] = load_or_empty(
+        os.path.join(RAW_ROOT, '客诉工单信息.csv'),
+        ['c_contact_phone_no', 'c_register_phone_no', 'c_identity_no'],
+    )
+    labels['consumer'] = load_or_empty(
+        os.path.join(RAW_ROOT, '消保案件工单.csv'),
+        ['c_contact_phone_no', 'c_register_phone_no', 'c_identity_no'],
+    )
     return labels
 
 
-def build_risk_label(order_row: pd.Series, labels: Dict[str, Dict[str, Set[str]]]) -> Dict:
-    mobiles = [order_row.get(col, '') for col in ['apply_loan_tel', 'apply_bank_mobile', 'repay_bank_mobile']]
-    mobiles = [str(m) for m in mobiles if pd.notna(m) and str(m) != '']
-    identity = str(order_row['apply_ident_no']) if pd.notna(order_row.get('apply_ident_no')) else ''
-    user_id = str(order_row['user_id']) if pd.notna(order_row.get('user_id')) else ''
+def build_risk_label(order_row: pd.Series, labels: Dict[str, pd.DataFrame], id_type: str, id_value: str) -> Dict:
     order_status = order_row.get('order_status')
 
-    bl = labels['blacklist']
-    bl_by_customer = user_id in bl['customer_no'] if user_id else False
-    bl_by_mobile = any(m in bl['mobile'] for m in mobiles)
-    bl_by_identity = identity in bl['identity'] if identity else False
-    reasons = []
-    if bl_by_customer:
-        reasons.append(bl['reason_by_customer'].get(user_id, ''))
+    bl_df = labels['blacklist']
+    cs_df = labels['complaint']
+    cp_df = labels['consumer']
 
-    complaint = labels['complaint']
-    comp_by_contact = any(m in complaint['contact_phone'] for m in mobiles)
-    comp_by_register = any(m in complaint['register_phone'] for m in mobiles)
-    comp_by_identity = identity in complaint['identity'] if identity else False
+    if not id_value:
+        return {
+            'blacklist': [],
+            'complaint': [],
+            'consumer_case': [],
+            'order_status': order_status,
+        }
 
-    consumer = labels['consumer']
-    cp_by_contact = any(m in consumer['contact_phone'] for m in mobiles)
-    cp_by_register = any(m in consumer['register_phone'] for m in mobiles)
-    cp_by_identity = identity in consumer['identity'] if identity else False
+    if id_type == 'uid':
+        bl_hits = bl_df[bl_df['c_customer_no'] == id_value]
+        comp_hits = cs_df.iloc[0:0]
+        cp_hits = cp_df.iloc[0:0]
+    elif id_type == 'identity_no':
+        bl_hits = bl_df[bl_df['c_identity_no'] == id_value]
+        comp_hits = cs_df[cs_df['c_identity_no'] == id_value]
+        cp_hits = cp_df[cp_df['c_identity_no'] == id_value]
+    elif id_type == 'phone_num':
+        bl_hits = bl_df[bl_df['c_mobile_phone'] == id_value]
+        comp_hits = cs_df[(cs_df['c_contact_phone_no'] == id_value) | (cs_df['c_register_phone_no'] == id_value)]
+        cp_hits = cp_df[(cp_df['c_contact_phone_no'] == id_value) | (cp_df['c_register_phone_no'] == id_value)]
+    else:
+        bl_hits = bl_df.iloc[0:0]
+        comp_hits = cs_df.iloc[0:0]
+        cp_hits = cp_df.iloc[0:0]
 
     return {
-        'blacklist': {
-            'by_customer_no': bl_by_customer,
-            'by_mobile': bl_by_mobile,
-            'by_identity': bl_by_identity,
-            'reasons': [r for r in reasons if r],
-        },
-        'complaint': {
-            'by_contact_phone': comp_by_contact,
-            'by_register_phone': comp_by_register,
-            'by_identity': comp_by_identity,
-        },
-        'consumer_case': {
-            'by_contact_phone': cp_by_contact,
-            'by_register_phone': cp_by_register,
-            'by_identity': cp_by_identity,
-        },
+        'blacklist': bl_hits.to_dict(orient='records'),
+        'complaint': comp_hits.to_dict(orient='records'),
+        'consumer_case': cp_hits.to_dict(orient='records'),
         'order_status': order_status,
     }
 
@@ -158,17 +140,16 @@ def process_month(year: int, month: int, labels: Dict[str, Dict[str, Set[str]]] 
 
     # 联系人编辑：四类联系人源合并
     contact_sources = [
-        (first_linkman_path, ['cid', 'mobile_phone', 'create_date'], 'create_date', 'mobile_phone', 'first_linkman'),
-        (second_linkman_path, ['cid', 'second_mobile_phone', 'create_date'], 'create_date', 'second_mobile_phone', 'second_linkman'),
-        (first_linkman_derived_path, ['cid', 'mobile_phone', 'create_date'], 'create_date', 'mobile_phone', 'first_linkman_derived'),
-        (second_linkman_derived_path, ['cid', 'second_mobile_phone', 'create_date'], 'create_date', 'second_mobile_phone', 'second_linkman_derived'),
+        (first_linkman_path, ['cid', 'mobile_phone', 'create_date'], 'create_date', 'mobile_phone'),
+        (second_linkman_path, ['cid', 'second_mobile_phone', 'create_date'], 'create_date', 'second_mobile_phone'),
+        (first_linkman_derived_path, ['cid', 'mobile_phone', 'create_date'], 'create_date', 'mobile_phone'),
+        (second_linkman_derived_path, ['cid', 'second_mobile_phone', 'create_date'], 'create_date', 'second_mobile_phone'),
     ]
-    for path, cols, tcol, phone_col, source in contact_sources:
+    for path, cols, tcol, phone_col in contact_sources:
         df = read_month_csv(path, cols, tcol)
         if not df.empty:
             df = df.rename(columns={phone_col: 'mobile_phone'})
-            df['source'] = source
-            append_events_from_df(events, df, tcol, 'contact_edit', ['cid', 'mobile_phone', 'source'])
+            append_events_from_df(events, df, tcol, 'contact_edit', ['cid', 'mobile_phone'])
 
     # 注销
     df = read_month_csv(logout_path, ['cid', 'identity_no', 'mobile_phone', 'create_date'], 'create_date')
@@ -200,8 +181,7 @@ def process_month(year: int, month: int, labels: Dict[str, Dict[str, Set[str]]] 
                 'ts': ts.isoformat(),
                 'data': order_payload,
             })
-            label = build_risk_label(row, labels)
-            # 针对每个标识符生成独立的风险事件
+            # 针对每个标识符生成独立的风险事件，标签仅用该标识符匹配
             id_targets: List[Tuple[str, str]] = []
             if pd.notna(row.get('user_id')) and str(row['user_id']) != '':
                 id_targets.append(('uid', str(row['user_id'])))
@@ -213,6 +193,7 @@ def process_month(year: int, month: int, labels: Dict[str, Dict[str, Set[str]]] 
                 id_targets.append(('phone_num', m))
 
             for id_type, id_value in id_targets:
+                label = build_risk_label(row, labels, id_type, id_value)
                 events.append({
                     'type': 'risk_assessment',
                     'ts': ts.isoformat(),
