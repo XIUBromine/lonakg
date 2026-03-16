@@ -1,0 +1,323 @@
+@baseUrl = http://127.0.0.1:5001
+@json = application/json
+
+###
+# 0) Health check
+GET {{baseUrl}}/health
+
+###
+# 1) Init constraints
+POST {{baseUrl}}/init
+
+###
+# 2) /event - customer_update (first insert)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "customer_update",
+  "ts": "2025-04-02T17:17:05",
+  "data": {
+    "baseid": "uid_1001",
+    "identity_no": "identity_hash_1001_a",
+    "mobile_phone": "phone_hash_1001_a"
+  }
+}
+
+###
+# 3) /event - customer_update (same identity+phone, should dedupe)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "customer_update",
+  "ts": "2025-04-02T17:18:05",
+  "data": {
+    "baseid": "uid_1001",
+    "identity_no": "identity_hash_1001_a",
+    "mobile_phone": "phone_hash_1001_a"
+  }
+}
+
+###
+# 4) /event - customer_update (identity changed, should update)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "customer_update",
+  "ts": "2025-04-02T17:19:05",
+  "data": {
+    "baseid": "uid_1001",
+    "identity_no": "identity_hash_1001_b",
+    "mobile_phone": "phone_hash_1001_a"
+  }
+}
+
+###
+# 5) /event - login (full fields)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "login",
+  "ts": "2025-04-02T17:20:56",
+  "data": {
+    "phone_num": "phone_hash_1001_a",
+    "cif_user_id": "uid_1001",
+    "device_no": "device_1001_a",
+    "remote_ip": "10.12.1.8",
+    "td_device_id": "td_device_1001_a"
+  }
+}
+
+###
+# 6) /event - login (partial fields, null-equivalent omitted)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "login",
+  "ts": "2025-04-02T17:21:56",
+  "data": {
+    "phone_num": "phone_hash_1001_a",
+    "cif_user_id": "uid_1001",
+    "device_no": "",
+    "remote_ip": "10.12.1.8",
+    "td_device_id": null
+  }
+}
+
+###
+# 7) /event - gps
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "gps",
+  "ts": "2025-04-02T17:22:10",
+  "data": {
+    "cid": "uid_1001",
+    "geo_code": "wqrfs17jqhm4"
+  }
+}
+
+###
+# 8) /event - contact_edit
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "contact_edit",
+  "ts": "2025-04-02T17:23:05",
+  "data": {
+    "cid": "uid_1001",
+    "mobile_phone": "phone_hash_contact_2001"
+  }
+}
+
+###
+# 9) /event - order (includes card bind phone edges)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "order",
+  "ts": "2025-04-02T17:24:12",
+  "data": {
+    "order_id": "order_5001",
+    "user_id": "uid_1001",
+    "apply_loan_tel": "phone_hash_1001_a",
+    "apply_ident_no": "identity_hash_1001_b",
+    "apply_card_no": "card_hash_3001",
+    "apply_bank_mobile": "phone_hash_bank_7001",
+    "repay_card_no": "card_hash_3002",
+    "repay_bank_mobile": "phone_hash_bank_7002",
+    "order_status": "REPAYING"
+  }
+}
+
+###
+# 10) /event - risk_assessment (should be skipped by design)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "risk_assessment",
+  "ts": "2025-04-02T17:24:12",
+  "id_type": "uid",
+  "id_value": "uid_1001",
+  "labels": {
+    "blacklist": [],
+    "complaint": [],
+    "consumer_case": [],
+    "order_status": "REPAYED"
+  }
+}
+
+###
+# 11) /event - logout (increase logout_count for identity_no and phone_num)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "logout",
+  "ts": "2025-04-02T17:29:54",
+  "data": {
+    "cid": "uid_1001",
+    "identity_no": "identity_hash_1001_b",
+    "mobile_phone": "phone_hash_1001_a"
+  }
+}
+
+###
+# 12) /event - invalid type (negative test)
+POST {{baseUrl}}/event
+Content-Type: {{json}}
+
+{
+  "type": "unknown_event",
+  "ts": "2025-04-02T18:00:00",
+  "data": {
+    "x": "y"
+  }
+}
+
+###
+# 13) /events - batch mixed event types
+POST {{baseUrl}}/events
+Content-Type: {{json}}
+
+{
+  "stop_on_error": false,
+  "events": [
+    {
+      "type": "customer_update",
+      "ts": "2025-04-02T18:01:00",
+      "data": {
+        "baseid": "uid_2001",
+        "identity_no": "identity_hash_2001_a",
+        "mobile_phone": "phone_hash_2001_a"
+      }
+    },
+    {
+      "type": "login",
+      "ts": "2025-04-02T18:01:02",
+      "data": {
+        "phone_num": "phone_hash_2001_a",
+        "cif_user_id": "uid_2001",
+        "device_no": "device_2001_a",
+        "remote_ip": "172.16.12.9",
+        "td_device_id": "td_device_2001_a"
+      }
+    },
+    {
+      "type": "gps",
+      "ts": "2025-04-02T18:01:03",
+      "data": {
+        "cid": "uid_2001",
+        "geo_code": "ws4u3fdvtbst"
+      }
+    },
+    {
+      "type": "order",
+      "ts": "2025-04-02T18:01:04",
+      "data": {
+        "order_id": "order_8001",
+        "user_id": "uid_2001",
+        "apply_loan_tel": "phone_hash_2001_a",
+        "apply_ident_no": "identity_hash_2001_a",
+        "apply_card_no": "card_hash_9001",
+        "apply_bank_mobile": "phone_hash_bank_9001",
+        "repay_card_no": "card_hash_9002",
+        "repay_bank_mobile": "phone_hash_bank_9002",
+        "order_status": "OVERDUE"
+      }
+    },
+    {
+      "type": "risk_assessment",
+      "ts": "2025-04-02T18:01:05",
+      "id_type": "phone_num",
+      "id_value": "phone_hash_2001_a",
+      "labels": {
+        "blacklist": [],
+        "complaint": [],
+        "consumer_case": [],
+        "order_status": "OVERDUE"
+      }
+    },
+    {
+      "type": "logout",
+      "ts": "2025-04-02T18:01:06",
+      "data": {
+        "cid": "uid_2001",
+        "identity_no": "identity_hash_2001_a",
+        "mobile_phone": "phone_hash_2001_a"
+      }
+    }
+  ]
+}
+
+###
+# 14) /events - batch with one bad event and stop_on_error=true
+POST {{baseUrl}}/events
+Content-Type: {{json}}
+
+{
+  "stop_on_error": true,
+  "events": [
+    {
+      "type": "login",
+      "ts": "2025-04-02T18:02:00",
+      "data": {
+        "phone_num": "phone_hash_3001_a",
+        "cif_user_id": "uid_3001",
+        "device_no": "device_3001_a",
+        "remote_ip": "10.0.3.8",
+        "td_device_id": "td_device_3001_a"
+      }
+    },
+    {
+      "type": "unknown_event",
+      "ts": "2025-04-02T18:02:01",
+      "data": {
+        "x": "bad"
+      }
+    },
+    {
+      "type": "gps",
+      "ts": "2025-04-02T18:02:02",
+      "data": {
+        "cid": "uid_3001",
+        "geo_code": "wtb8jy8p8rcb"
+      }
+    }
+  ]
+}
+
+###
+# 15) /ingest_jsonl - replay local sample file
+POST {{baseUrl}}/ingest_jsonl
+Content-Type: {{json}}
+
+{
+  "file_path": "api/example.jsonl"
+}
+
+###
+# 16) /ingest_jsonl - bad path (negative test)
+POST {{baseUrl}}/ingest_jsonl
+Content-Type: {{json}}
+
+{
+  "file_path": "api/not_exists.jsonl",
+  "limit": 10
+}
+
+###
+# 17) Health check again
+GET {{baseUrl}}/health
+
+###
+# 18) Optional: close driver in service process
+POST {{baseUrl}}/shutdown
