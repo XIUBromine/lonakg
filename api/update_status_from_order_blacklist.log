@@ -1,0 +1,74 @@
+2026-03-25 15:13:53 | INFO | start backfill database=prod
+2026-03-25 15:13:53 | INFO | order_file=/data/aiimport_1119/订单order信息.csv
+2026-03-25 15:13:53 | INFO | blacklist_file=/data/aiimport_1119/黑名单log.csv
+2026-03-25 15:13:53 | INFO | batch_size=5000 progress_interval=50000
+2026-03-25 15:13:55 | INFO | order status progress=50000 speed=22053.30 rows/s
+2026-03-25 15:13:57 | INFO | order status progress=100000 speed=23394.72 rows/s
+2026-03-25 15:13:59 | INFO | order status progress=150000 speed=24118.30 rows/s
+2026-03-25 15:14:01 | INFO | order status progress=200000 speed=24418.62 rows/s
+2026-03-25 15:14:03 | INFO | order status progress=250000 speed=24187.02 rows/s
+2026-03-25 15:14:05 | INFO | order status progress=300000 speed=23936.30 rows/s
+2026-03-25 15:14:07 | INFO | order status progress=350000 speed=23743.59 rows/s
+2026-03-25 15:14:09 | INFO | order status progress=400000 speed=23616.65 rows/s
+2026-03-25 15:14:12 | INFO | order status progress=450000 speed=23684.68 rows/s
+2026-03-25 15:14:14 | INFO | order status progress=500000 speed=23431.75 rows/s
+2026-03-25 15:14:16 | INFO | order status progress=550000 speed=23405.36 rows/s
+2026-03-25 15:14:18 | INFO | order status progress=600000 speed=23324.70 rows/s
+2026-03-25 15:14:21 | INFO | order status progress=650000 speed=23244.37 rows/s
+2026-03-25 15:14:23 | INFO | order status progress=700000 speed=23196.50 rows/s
+2026-03-25 15:14:25 | INFO | order status progress=750000 speed=23131.77 rows/s
+2026-03-25 15:14:27 | INFO | order status progress=800000 speed=23145.08 rows/s
+2026-03-25 15:14:29 | INFO | order status progress=850000 speed=23204.02 rows/s
+2026-03-25 15:14:31 | INFO | order status progress=900000 speed=23238.82 rows/s
+2026-03-25 15:14:33 | INFO | order status progress=950000 speed=23399.21 rows/s
+2026-03-25 15:14:35 | INFO | order status progress=1000000 speed=23441.74 rows/s
+2026-03-25 15:14:37 | INFO | order status progress=1050000 speed=23465.06 rows/s
+2026-03-25 15:14:39 | INFO | order status progress=1100000 speed=23518.47 rows/s
+2026-03-25 15:14:42 | INFO | order status progress=1150000 speed=23372.86 rows/s
+2026-03-25 15:14:44 | INFO | order status progress=1200000 speed=23340.21 rows/s
+2026-03-25 15:14:46 | INFO | order status progress=1250000 speed=23279.02 rows/s
+2026-03-25 15:14:48 | INFO | order status progress=1300000 speed=23317.16 rows/s
+2026-03-25 15:14:50 | INFO | order status progress=1350000 speed=23335.43 rows/s
+2026-03-25 15:14:52 | INFO | order status progress=1400000 speed=23395.43 rows/s
+2026-03-25 15:14:54 | INFO | order status progress=1450000 speed=23433.23 rows/s
+2026-03-25 15:14:57 | INFO | order status progress=1500000 speed=23363.01 rows/s
+2026-03-25 15:14:59 | INFO | order status progress=1550000 speed=23331.86 rows/s
+2026-03-25 15:15:01 | INFO | order status progress=1600000 speed=23376.43 rows/s
+2026-03-25 15:15:03 | INFO | order status progress=1650000 speed=23416.12 rows/s
+2026-03-25 15:15:05 | INFO | order status progress=1700000 speed=23484.60 rows/s
+2026-03-25 15:15:07 | INFO | order status progress=1750000 speed=23510.54 rows/s
+2026-03-25 15:15:09 | INFO | order status progress=1800000 speed=23584.02 rows/s
+2026-03-25 15:15:11 | INFO | order status progress=1850000 speed=23650.30 rows/s
+2026-03-25 15:15:13 | INFO | order status progress=1900000 speed=23604.66 rows/s
+2026-03-25 15:15:15 | INFO | order status progress=1950000 speed=23626.45 rows/s
+2026-03-25 15:15:17 | INFO | order status progress=2000000 speed=23671.67 rows/s
+2026-03-25 15:15:19 | INFO | order status progress=2050000 speed=23655.76 rows/s
+2026-03-25 15:15:21 | INFO | order status progress=2100000 speed=23695.25 rows/s
+2026-03-25 15:15:23 | INFO | order status progress=2150000 speed=23668.55 rows/s
+2026-03-25 15:15:25 | INFO | order status progress=2200000 speed=23713.38 rows/s
+2026-03-25 15:15:27 | INFO | order status progress=2250000 speed=23718.05 rows/s
+2026-03-25 15:15:30 | INFO | order status progress=2300000 speed=23722.70 rows/s
+2026-03-25 15:15:30 | INFO | order status done total=2310344 elapsed=97.46s speed=23706.45 rows/s
+2026-03-25 15:15:35 | INFO | blacklist status progress=50000 speed=10230.87 rows/s
+2026-03-25 15:15:39 | INFO | blacklist status progress=100000 speed=10792.22 rows/s
+2026-03-25 15:15:44 | INFO | blacklist status progress=150000 speed=11058.70 rows/s
+2026-03-25 15:15:48 | INFO | blacklist status progress=200000 speed=11189.43 rows/s
+2026-03-25 15:15:52 | INFO | blacklist status progress=250000 speed=11229.23 rows/s
+2026-03-25 15:15:57 | INFO | blacklist status progress=300000 speed=11293.47 rows/s
+2026-03-25 15:16:01 | INFO | blacklist status progress=350000 speed=11398.57 rows/s
+2026-03-25 15:16:05 | INFO | blacklist status progress=400000 speed=11448.09 rows/s
+2026-03-25 15:16:09 | INFO | blacklist status progress=450000 speed=11487.73 rows/s
+2026-03-25 15:16:14 | INFO | blacklist status progress=500000 speed=11471.02 rows/s
+2026-03-25 15:16:18 | INFO | blacklist status progress=550000 speed=11483.20 rows/s
+2026-03-25 15:16:22 | INFO | blacklist status progress=600000 speed=11453.50 rows/s
+2026-03-25 15:16:27 | INFO | blacklist status progress=650000 speed=11450.27 rows/s
+2026-03-25 15:16:31 | INFO | blacklist status progress=700000 speed=11451.29 rows/s
+2026-03-25 15:16:35 | INFO | blacklist status progress=750000 speed=11501.53 rows/s
+2026-03-25 15:16:39 | INFO | blacklist status progress=800000 speed=11548.71 rows/s
+2026-03-25 15:16:43 | INFO | blacklist status progress=850000 speed=11592.36 rows/s
+2026-03-25 15:16:47 | INFO | blacklist status progress=900000 speed=11628.48 rows/s
+2026-03-25 15:16:52 | INFO | blacklist status progress=950000 speed=11652.28 rows/s
+2026-03-25 15:16:56 | INFO | blacklist status progress=1000000 speed=11678.71 rows/s
+2026-03-25 15:17:00 | INFO | blacklist status progress=1050000 speed=11702.60 rows/s
+2026-03-25 15:17:00 | INFO | blacklist status done total=1051008 elapsed=89.81s speed=11702.52 rows/s
+2026-03-25 15:17:00 | INFO | all done order_rows=2310344 blacklist_rows=1051008 total_elapsed=187.27s
