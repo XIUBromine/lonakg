@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>增量导入控制台</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --primary: #0057b8;
+      --primary-strong: #004494;
+      --ok: #0f766e;
+      --warn: #b45309;
+      --err: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, #dceeff 0%, transparent 48%),
+        radial-gradient(circle at 90% 100%, #fff0dc 0%, transparent 42%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 28px auto;
+      padding: 0 16px;
+    }
+
+    .hero {
+      background: linear-gradient(120deg, #0f5ab8, #0b7fab);
+      color: #fff;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(15, 90, 184, 0.25);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 10px 0 6px;
+    }
+
+    input, select, button, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid rgba(0, 87, 184, 0.2);
+      border-color: var(--primary);
+    }
+
+    button {
+      margin-top: 14px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+
+    button:hover { background: var(--primary-strong); }
+    button:active { transform: translateY(1px); }
+    button[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+    .hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0 2px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dropzone {
+      border: 1.5px dashed #a4c2e8;
+      background: #f0f6ff;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      color: #1c4a82;
+      font-size: 13px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+    .dropzone.dragover {
+      border-color: #0b7fab;
+      box-shadow: 0 10px 22px rgba(11, 127, 171, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .file-queue {
+      margin-top: 10px;
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #f7f8fb;
+      padding: 8px;
+    }
+
+    .file-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid #edf1f7;
+      margin-bottom: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .file-row:last-child { margin-bottom: 0; }
+
+    .file-row.active {
+      border-color: #0b7fab;
+      box-shadow: 0 0 0 2px rgba(11, 127, 171, 0.12);
+    }
+
+    .file-row.bad {
+      border-color: #ef4444;
+      background: #fff5f5;
+    }
+
+    .file-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-size {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .file-badge {
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 2px 8px;
+      font-weight: 700;
+      margin-right: 6px;
+      white-space: nowrap;
+    }
+
+    .file-badge.bad {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .file-remove {
+      border: none;
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 12px;
+      border-radius: 7px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+
+    .file-remove:hover { background: #fecaca; }
+
+    .sample-panel {
+      margin-top: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .sample-panel a {
+      color: #0b5cab;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .sample-panel a:hover { text-decoration: underline; }
+
+    .mapping {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+      line-height: 1.6;
+      max-height: 280px;
+      overflow: auto;
+    }
+
+    .result {
+      margin-top: 12px;
+      min-height: 280px;
+      background: #dbdce0;
+      color: #010714;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .graph-summary {
+      margin-top: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      color: #0f172a;
+    }
+
+    .graph-summary h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #1f2937;
+    }
+
+    .graph-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .graph-header h3 {
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .graph-refresh {
+      border: 1px solid #c7d2e5;
+      background: #ffffff;
+      color: #0b5cab;
+      border-radius: 8px;
+      padding: 4px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .graph-refresh:hover {
+      background: #eff6ff;
+    }
+
+    .graph-metrics {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .graph-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .err { color: var(--err); }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>增量 CSV 导入控制台</h1>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>上传并执行导入</h2>
+        <form id="importForm">
+          <label for="dataset">数据集</label>
+          <select id="dataset" name="dataset" required>
+            {% for item in datasets %}
+            <option value="{{ item.key }}">{{ item.key }}</option>
+            {% endfor %}
+          </select>
+          <div id="columnHint" class="hint"></div>
+          <div id="samplePanel" class="sample-panel"></div>
+
+          <!-- <label for="database">Neo4j 数据库</label>
+          <input id="database" name="database" type="text" value="{{ default_database }}" required /> -->
+          <label for="database">Neo4j 数据库</label>
+          <select id="database" name="database" required>
+            {% for db in database_options %}
+            <option value="{{ db }}" {% if db == default_database %}selected{% endif %}>{{ db }}</option>
+            {% endfor %}
+          </select>
+
+          <!-- <label for="blacklist_max_ts">blacklist_max_ts (仅 blacklist_log 使用)</label>
+          <input id="blacklist_max_ts" name="blacklist_max_ts" type="text" value="{{ default_blacklist_max_ts }}" placeholder="2025-11-20T00:00:00" /> -->
+
+          <label for="files">CSV 文件</label>
+          <div id="dropzone" class="dropzone">
+            拖拽 CSV 到这里，或点击下方选择文件
+          </div>
+          <input id="files" name="files" type="file" accept=".csv" multiple required />
+          <div class="meta-row">
+            <span id="fileCount">已选 0 个文件</span>
+            <span id="fileTotal">总大小 0 B</span>
+          </div>
+          <div id="fileQueue" class="file-queue"></div>
+
+          <button id="submitBtn" type="submit">开始导入</button>
+          <div class="hint">上传上限 {{ max_upload_mb }} MB。字段名固定使用 files。</div>
+        </form>
+
+        <!-- <div id="status" class="status"></div>
+        <pre id="result" class="result">等待上传...</pre> -->
+      </article>
+
+      <article class="card">
+        <!-- <h2>接口映射</h2>
+        <ul class="mapping">
+          {% for item in datasets %}
+          <li>{{ item.label }}</li>
+          {% endfor %}
+        </ul>
+        <div class="hint">
+          建议一次请求只处理一个数据集；若同日有多份拆分 CSV，可在同一次请求中多选上传。
+        </div> -->
+        <div id="status" class="status"></div>
+        <pre id="result" class="result">等待上传...</pre>
+        <div id="graphSummary" class="graph-summary"></div>
+      </article>
+    </section>
+  </div>
+
+  <script id="columnRulesJson" type="application/json">{{ column_rules | tojson }}</script>
+
+  <script>
+    const form = document.getElementById('importForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
+    const datasetEl = document.getElementById('dataset');
+    const filesEl = document.getElementById('files');
+    const columnHintEl = document.getElementById('columnHint');
+    const samplePanelEl = document.getElementById('samplePanel');
+    const dropzoneEl = document.getElementById('dropzone');
+    const fileQueueEl = document.getElementById('fileQueue');
+    const fileCountEl = document.getElementById('fileCount');
+    const fileTotalEl = document.getElementById('fileTotal');
+    const graphSummaryEl = document.getElementById('graphSummary');
+    const columnRulesJsonEl = document.getElementById('columnRulesJson');
+    const columnRules = columnRulesJsonEl ? JSON.parse(columnRulesJsonEl.textContent || '{}') : {};
+    let selectedFiles = [];
+    let selectedFileKey = '';
+    const validationResults = new Map();
+
+    function toFileKey(file) {
+      return `${file.name}-${file.size}-${file.lastModified}`;
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let idx = 0;
+      let val = bytes;
+      while (val >= 1024 && idx < units.length - 1) {
+        val /= 1024;
+        idx += 1;
+      }
+      return `${val.toFixed(val >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+    }
+
+    function updateFileInput() {
+      const dt = new DataTransfer();
+      selectedFiles.forEach(file => dt.items.add(file));
+      filesEl.files = dt.files;
+    }
+
+    function syncFileQueue() {
+      const totalBytes = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+      fileCountEl.textContent = `已选 ${selectedFiles.length} 个文件`;
+      fileTotalEl.textContent = `总大小 ${formatBytes(totalBytes)}`;
+      fileQueueEl.innerHTML = '';
+      selectedFiles.forEach(file => {
+        const fileKey = toFileKey(file);
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        const validation = validationResults.get(fileKey);
+        if (fileKey === selectedFileKey) {
+          row.classList.add('active');
+        }
+        if (validation && !validation.ok) {
+          row.classList.add('bad');
+        }
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'file-name';
+        nameEl.textContent = file.name;
+
+        const sizeEl = document.createElement('div');
+        sizeEl.className = 'file-size';
+        sizeEl.textContent = formatBytes(file.size);
+
+        const badgeEl = document.createElement('span');
+        if (validation && !validation.ok) {
+          badgeEl.className = 'file-badge bad';
+          badgeEl.textContent = '格式错误';
+        }
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'file-remove';
+        removeBtn.textContent = '移除';
+        removeBtn.addEventListener('click', () => {
+          if (fileKey === selectedFileKey) {
+            selectedFileKey = '';
+          }
+          validationResults.delete(fileKey);
+          selectedFiles = selectedFiles.filter(item => toFileKey(item) !== toFileKey(file));
+          updateFileInput();
+          syncFileQueue();
+          previewFileValidation();
+        });
+
+        row.addEventListener('click', (event) => {
+          if (event.target === removeBtn) {
+            return;
+          }
+          selectedFileKey = fileKey;
+          syncFileQueue();
+          renderSelectedValidation();
+        });
+
+        row.appendChild(nameEl);
+        row.appendChild(sizeEl);
+        if (badgeEl.textContent) {
+          row.appendChild(badgeEl);
+        }
+        row.appendChild(removeBtn);
+        fileQueueEl.appendChild(row);
+      });
+    }
+
+    function mergeFiles(incoming) {
+      const existing = new Set(selectedFiles.map(toFileKey));
+      for (const file of incoming) {
+        const key = toFileKey(file);
+        if (!existing.has(key)) {
+          selectedFiles.push(file);
+          existing.add(key);
+          if (!selectedFileKey) {
+            selectedFileKey = key;
+          }
+        }
+      }
+      updateFileInput();
+      syncFileQueue();
+    }
+
+    function setResultStatus(ok) {
+      setStatus(ok ? '列校验通过' : '列校验失败', ok ? 'ok' : 'err');
+    }
+
+    function renderSelectedValidation() {
+      if (!selectedFileKey) {
+        setStatus('等待选择文件', 'warn');
+        resultEl.textContent = '请选择左侧文件查看列校验结果。';
+        return;
+      }
+
+      const entry = validationResults.get(selectedFileKey);
+      if (!entry) {
+        setStatus('等待校验', 'warn');
+        resultEl.textContent = '该文件尚未校验，请稍候。';
+        return;
+      }
+
+      setResultStatus(entry.ok);
+      resultEl.textContent = JSON.stringify(entry.payload, null, 2);
+    }
+
+    function normalizeCol(name) {
+      return String(name || '').replace(/^\ufeff/, '').trim().toLowerCase();
+    }
+
+    function parseHeaderLine(text) {
+      const firstLine = String(text || '').split(/\r?\n/, 1)[0] || '';
+      return firstLine
+        .split(',')
+        .map(item => item.trim().replace(/^"|"$/g, ''))
+        .filter(Boolean)
+        .map(normalizeCol);
+    }
+
+    async function readHeaderColumns(file) {
+      const sample = await file.slice(0, 8192).text();
+      return parseHeaderLine(sample);
+    }
+
+    function renderDatasetHint() {
+      const dataset = datasetEl.value;
+      const rule = columnRules[dataset];
+      if (!rule) {
+        columnHintEl.textContent = '当前数据集无额外列校验规则。';
+      } else {
+        columnHintEl.textContent = '列校验: ' + rule.hint;
+      }
+
+      const sampleUrl = `/samples/${dataset}.csv`;
+      samplePanelEl.innerHTML = `示例文件: <a href="${sampleUrl}">下载 ${dataset}.csv</a>`;
+    }
+
+    async function previewFileValidation() {
+      const dataset = datasetEl.value;
+      const rule = columnRules[dataset];
+      const files = filesEl.files;
+      if (!rule || !files || files.length === 0) {
+        validationResults.clear();
+        renderSelectedValidation();
+        return;
+      }
+
+      validationResults.clear();
+      for (const file of files) {
+        const headerCols = await readHeaderColumns(file);
+        const error = validateColumns(rule, headerCols);
+        const fileKey = toFileKey(file);
+        if (error) {
+          validationResults.set(fileKey, {
+            ok: false,
+            payload: {
+              ok: false,
+              dataset,
+              file: file.name,
+              error,
+              hint: rule.hint,
+            },
+          });
+        } else {
+          validationResults.set(fileKey, {
+            ok: true,
+            payload: {
+              ok: true,
+              dataset,
+              file: file.name,
+              message: '文件表头校验通过，可以提交导入。',
+            },
+          });
+        }
+        if (error) {
+          continue;
+        }
+      }
+
+      if (!selectedFileKey && files.length > 0) {
+        selectedFileKey = toFileKey(files[0]);
+      }
+      syncFileQueue();
+      renderSelectedValidation();
+    }
+
+    function validateColumns(rule, columns) {
+      const columnSet = new Set(columns);
+      const missingAll = (rule.required_all || []).filter(col => !columnSet.has(normalizeCol(col)));
+      if (missingAll.length > 0) {
+        return `缺少必需列: ${missingAll.join(', ')}`;
+      }
+
+      for (const group of (rule.required_any_groups || [])) {
+        const ok = group.some(col => columnSet.has(normalizeCol(col)));
+        if (!ok) {
+          return `至少需要包含以下列之一: ${group.join(' / ')}`;
+        }
+      }
+      return null;
+    }
+
+    function setStatus(msg, cls) {
+      statusEl.className = 'status ' + cls;
+      statusEl.textContent = msg;
+    }
+
+    function renderGraphSummary(payload) {
+      if (!payload || !payload.ok) {
+        graphSummaryEl.innerHTML = '<h3>Neo4j </h3><div class="graph-meta">读取失败或尚未加载。</div>';
+        return;
+      }
+      const summary = payload.summary || {};
+      const labels = (summary.labels || []).join(', ') || '无';
+      const relTypes = (summary.relationship_types || []).join(', ') || '无';
+      graphSummaryEl.innerHTML = `
+        <div class="graph-header">
+          <h3>Neo4j  (${payload.database})</h3>
+          <button id="graphRefresh" class="graph-refresh" type="button">刷新</button>
+        </div>
+        <div class="graph-metrics">
+          <span>节点: ${summary.node_count ?? 0}</span>
+          <span>关系: ${summary.relationship_count ?? 0}</span>
+        </div>
+        <div class="graph-meta">节点类型: ${labels}</div>
+        <div class="graph-meta">关系类型: ${relTypes}</div>
+      `;
+      const refreshBtn = document.getElementById('graphRefresh');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', fetchGraphSummary);
+      }
+    }
+
+    async function fetchGraphSummary() {
+      const database = document.getElementById('database').value;
+      try {
+        const resp = await fetch(`/api/graph/summary?database=${encodeURIComponent(database)}`);
+        const data = await resp.json();
+        renderGraphSummary(data);
+      } catch (err) {
+        renderGraphSummary({ ok: false, error: String(err) });
+      }
+    }
+
+    dropzoneEl.addEventListener('click', () => filesEl.click());
+    dropzoneEl.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropzoneEl.classList.add('dragover');
+    });
+    dropzoneEl.addEventListener('dragleave', () => dropzoneEl.classList.remove('dragover'));
+    dropzoneEl.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropzoneEl.classList.remove('dragover');
+      if (event.dataTransfer && event.dataTransfer.files) {
+        mergeFiles(event.dataTransfer.files);
+        previewFileValidation();
+      }
+    });
+
+    filesEl.addEventListener('change', () => {
+      if (filesEl.files && filesEl.files.length > 0) {
+        mergeFiles(filesEl.files);
+        previewFileValidation();
+      }
+    });
+
+    datasetEl.addEventListener('change', async () => {
+      renderDatasetHint();
+      await previewFileValidation();
+    });
+    renderDatasetHint();
+    syncFileQueue();
+    renderSelectedValidation();
+    fetchGraphSummary();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      setStatus('导入执行中，请稍候...', 'warn');
+      submitBtn.disabled = true;
+
+      await previewFileValidation();
+      const hasInvalid = Array.from(validationResults.values()).some(entry => !entry.ok);
+      if (hasInvalid) {
+        setStatus('格式错误无法导入', 'err');
+        resultEl.textContent = '队列中存在列校验失败的文件，请移除后再提交。';
+        submitBtn.disabled = false;
+        return;
+      }
+
+      const dataset = datasetEl.value;
+      const rule = columnRules[dataset];
+      const files = filesEl.files;
+      if (rule && files && files.length > 0) {
+        for (const file of files) {
+          const headerCols = await readHeaderColumns(file);
+          const error = validateColumns(rule, headerCols);
+          if (error) {
+            setStatus('列校验失败', 'err');
+            resultEl.textContent = JSON.stringify({
+              ok: false,
+              dataset,
+              file: file.name,
+              error,
+              hint: rule.hint,
+            }, null, 2);
+            submitBtn.disabled = false;
+            return;
+          }
+        }
+      }
+
+      const payload = new FormData(form);
+      try {
+        const resp = await fetch('/api/import', {
+          method: 'POST',
+          body: payload,
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || !data.ok) {
+          setStatus('导入失败', 'err');
+          resultEl.textContent = JSON.stringify(data, null, 2);
+          return;
+        }
+
+        setStatus('导入成功', 'ok');
+        resultEl.textContent = JSON.stringify(data, null, 2);
+        await fetchGraphSummary();
+      } catch (err) {
+        setStatus('网络或服务异常', 'err');
+        resultEl.textContent = String(err);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
