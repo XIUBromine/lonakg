@@ -1,5 +1,11 @@
 {
     "python-envs.defaultEnvManager": "ms-python.python:conda",
     "python-envs.defaultPackageManager": "ms-python.python:conda",
-    "python-envs.pythonProjects": []
+    "python-envs.pythonProjects": [],
+    "chat.tools.terminal.autoApprove": {
+        "/^python -c \"import sqlite3; c=sqlite3\\.connect\\('/home/ldh/lonakg/model/output/device_channel_index\\.sqlite'\\); print\\(c\\.execute\\(\\\\\"select app_channel from device_channel where device_no='l19al7h2-j1o7-e91w-615z-7dr9srbfi1qt'\\\\\"\\)\\.fetchone\\(\\)\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
 }

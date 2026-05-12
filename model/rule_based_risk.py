@@ -25,17 +25,17 @@ ALLOWED_NODE_TYPES = {
 
 @dataclass
 class RiskHyperParams:
-    status_overdue_risk: float = 100
+    status_overdue_risk: float = 80
     blacklisted_risk: float = 100
 
     phone_main_weight: float = 1
     phone_contact_weight: float = 0.5
-    identity_weight: float = 1
-    card_weight: float = 1
-    device_weight: float = 1
-    td_device_weight: float = 1
-    remote_ip_weight: float = 1
-    geo_weight: float = 1
+    identity_weight: float = 1.5
+    card_weight: float = 1.5
+    device_weight: float = 1.2
+    td_device_weight: float = 2
+    remote_ip_weight: float = 0.3
+    geo_weight: float = 0.1
 
     # phone_main_weight: float = 1.2
     # phone_contact_weight: float = 0.7
@@ -48,20 +48,20 @@ class RiskHyperParams:
 
     relation_type_weight: Dict[str, float] = field(
         default_factory=lambda: {
-            "HAS_IDENTITY": 0.9,
+            "HAS_IDENTITY": 1.2,
             "HAS_PHONE": 0.8,
             "LOGIN_WITH_PHONE": 1.0,
-            "LOGIN_WITH_DEVICE": 1.2,
-            "LOGIN_WITH_TD_DEVICE": 1.3,
-            "LOGIN_WITH_IP": 0.1,
-            "LOCATED_AT": 0.25,
-            "HAS_CONTACT_PHONE": 0.08,
+            "LOGIN_WITH_DEVICE": 1.1,
+            "LOGIN_WITH_TD_DEVICE": 1.5,
+            "LOGIN_WITH_IP": 0.2,
+            "LOCATED_AT": 0.3,
+            "HAS_CONTACT_PHONE": 0.1,
             "PLACED_ORDER": 0.7,
-            "ORDER_APPLY_PHONE": 0.95,
-            "ORDER_APPLY_IDENTITY": 1.0,
-            "ORDER_APPLY_CARD": 1.15,
-            "ORDER_REPAY_CARD": 1.2,
-            "CARD_BIND_PHONE": 1.1,
+            "ORDER_APPLY_PHONE": 1.0,
+            "ORDER_APPLY_IDENTITY": 1.3,
+            "ORDER_APPLY_CARD": 1.5,
+            "ORDER_REPAY_CARD": 1.5,
+            "CARD_BIND_PHONE": 1,
         }
     )
 
@@ -405,7 +405,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--node-type", choices=sorted(ALLOWED_NODE_TYPES.keys()), default="uid"
     )
-    parser.add_argument("--node-key", default="20250921023199856279")
+    parser.add_argument("--node-key", default="20240625023191512514")
     parser.add_argument("--k", type=int, default=2)
     parser.add_argument("--database", default=os.getenv("NEO4J_DATABASE", "prod"))
     parser.add_argument(
